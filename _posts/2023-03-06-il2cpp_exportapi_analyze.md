@@ -38,6 +38,10 @@ review libil2cpp代码后确认定义了il2cpp_xxx函数导出的关键宏为DO_
 
 ### 看看神奇的Genshin impact是如何做得呢
 unityplayer是自己的签名，结合米哈游他们有闭源的unity买断代码，应该是自己魔改了一份给原神用的
-看他们的UserAssembly.dll确认相关导出函数只剩下了一个il2cpp_get_api_table，一眼没见过的api，搜了下il2cpp-api-functions确认这个api使他们自己搞得，从名字上大概猜到他们的保护思路了，就是修改unityplayer的LookupSymbol方法，然后去统一获取il2cpp_get_api_table函数，然后再通过该函数鉴权/拿到真正的地址，后续ida看下改函数的实现有发现再补充......
+看他们的UserAssembly.dll确认相关导出函数只剩下了一个il2cpp_get_api_table，一眼没见过的api，搜了下il2cpp-api-functions确认这个api使他们自己搞得，从名字上大概猜到他们的保护思路了，就是修改unityplayer的LookupSymbol方法，然后去统一获取il2cpp_get_api_table函数，然后再通过该函数鉴权/拿到真正的地址，ida看了下相关函数被VMP了
 
-未完待续......
+### 意外发现
+github搜索关键字il2cpp_get_api_table发现了个小仓库里面有一些手游的il2cpp的保护分析，值得一看[JMBQ/dump-games](https://github.com/JMBQ/dump-games)，总结如下
+月圆之夜:替换dlsym，字符串compare返回地址
+龙之谷2:替换dlsym，根据立即数返回地址，一眼就是编译期字符串strhash(参考项目：ADVobfuscator)，隐去了字符串特征，结果特么这天才在报错日志里面暴露了字符串给人定位......
+
