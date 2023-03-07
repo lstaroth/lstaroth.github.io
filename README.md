@@ -23,5 +23,5 @@ permalink: /
 - [il2cppdumper_analyze](https://lstaroth.github.io/2023-03-05-il2cppdumper_analyze.html)  
 分析il2cppdumper的实现原理和中间逻辑的脆弱点，以及可能的对抗思路<br><br>
 
-- [il2cpp_exportapi_analyze](https://lstaroth.github.io/2023-03-05-il2cppzygisk_exportapi_analyze.html)  
+- [il2cpp_exportapi_analyze](https://lstaroth.github.io/2023-03-06-il2cpp_exportapi_analyze.html)  
 分析通过il2cpp导出函数动态分析的方式原理以及解决方案<br><br>
