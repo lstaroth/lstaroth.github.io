@@ -1,0 +1,46 @@
+### 主题
+分析il2cppdumper这个该架构最流行的分析工具之一，看看他的分析思路，找找其中的薄弱点
+
+### 两个重要结构体的查找
+分析il2cppdumper源码后确认所有的数据分析都依赖于gameassembly中的两个结构体首地址的查找，这两个关键结构体中有关键字段数据，分别是Il2CppMetadataRegistration结构体和Il2CppCodeRegistration结构体
+
+### Il2CppMetadataRegistration结构体二进制定位
+Il2CppMetadataRegistration类型的结构体在之前的分析中确认是新版的il2cpp下存储关键数据的结构体，那么il2cppdumper是怎么找到这个结构体的呢，是通过在global-metadata中计算typedef count，并在PE结构的data段中寻找这个count，并利用typeDefinitionsSizesCount == fieldOffsetsCount的原理过滤出了这个结构体的位置，很骚的方法，但是好像还挺有用的。
+
+### Il2CppCodeRegistration结构体二进制定位
+找到Il2CppCodeRegistration这个结构地址是解析il2cpp数据后拿到methodname对应的address的必经之路，核心逻辑依然是从这个结构体本身的特征入手。
+先定位这个结构体的最后一个字段codeGenModules，再对比上一个字段是否等于codeGenModulesCount，确认之后-13个pointer得到结构体的起始地址，如何定codeGenModules如下
+codeGenModules字段的类型为Il2CppCodeGenModule**，而Il2CppCodeGenModule类型的第一个参数为moduleName，由于必定会有mscorlib.dll的name所以根据这一点进行定位
+1. 循环遍历每一个mscorlib.dll字符串地址
+2. 对这个地址查找引用
+3. 第一个引用得有但弃之
+4. 第二个引用，这里会认为第二个引用指向的是g_mscorlib_CodeGenModule的第一个元素name也就是指向结构体本身
+5. 但是我们不清楚这里的g_mscorlib_CodeGenModule在g_CodeGenModules结构体中时第几个顺位，所以逐个指针往上减直到减到g_CodeGenModules结构体的首地址才能找到引用，所以这里找到了g_CodeGenModules结构体的地址
+6. 引用g_CodeGenModules这个结构体的地方只有一个，就是g_CodeRegistration结构体内部，结合上述判断可以定位到结构体地址
+
+不过这里其实有个更好的方式，对mscorlib.dll字符串的引用需要排除的都是在代码中使用的字符串，所以只要把所有可执行段的引用排除就能直接定位到数据段的结构体了，或者更干脆点只看PE结构中保存全局变量的data段即可。
+
+### metadatapointer/Token获取
+即使定位到上述两个结构体但是没有metadatapointer/token还是没法进行分析呀，那dumper是怎么找到的呢，结果你猜怎么着，原来是特喵的暴力搜索，在所有的data段中搜索指针，并且这个指针需满足4个条件
+1. 无论是32位指针还是64位指针都不能超过32位
+2. 指针的type分离出来后在0~6之间(type为最高三位)
+3. 最后一位需要为1即init位为未初始化的状态
+4. 分离出来的index需要在global-metadata header中计算出来的count之内
+
+### MethodRef函数名解析
+在methodDef中输入的Index就可以从metadataheader指向的Il2CppMethodDefinition中拿到该方法的nameindex和typeindex继而得到全函数名，由于这是不是重点这里不展开。
+methodRef的函数名解析初看很难，但真正实现起来的时候发现可以借花献佛大幅简化难度，因为他的核心逻辑还是和Def是一样的，关键就是如何将输入的Index转换为“methodDefIndex”，转换逻辑为metadataRegistration->methodSpecs[Index]，转换后调用MethodDef的名称获取函数即可（此处不包含模板名解析部分）
+
+### MethodRef函数地址解析
+相对上述函数名解析要复杂一些，下面是解析过程
+1. 输入index，最终输出的VA是从codeRegistration→genericMethodPointers[index1]拿到的
+2. 那么index1是从哪来的呢，是从metadataRegistration->genericMethodTable[index2].indices.methodIndex中拿到的
+3. 那么这里的index2是从哪来的呢，index2不是直接转换到的，而是遍历metadataRegistration->genericMethodTable数组，找到metadataRegistration->genericMethodTable[index2].genericMethodIndex == 输入index的那个元素，此时的即为index2需要指向的位置
+
+
+### il2cppdumper工具对抗性思考
+核心点是找到il2cppdumper在分析还原时依赖的前置条件的脆弱点，初步想到3种思路
+1. 两个关键结构体的定位难度增加
+2. 两个关键结构体的内部字段顺序打乱
+3. pointer/token配合type定义进行修改
+4. metadata的header加密
