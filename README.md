@@ -25,3 +25,6 @@ permalink: /
 
 - [il2cpp_exportapi_analyze](https://lstaroth.github.io/2023-03-06-il2cpp_exportapi_analyze.html)  
 分析通过il2cpp导出函数动态分析的方式原理以及解决方案<br><br>
+
+- [il2cpp_analysis_cases](https://lstaroth.github.io/2023-03-09-il2cpp_analysis_cases.html)  
+一些难以分析的保护方案的分析文章，from kate's code<br><br>
