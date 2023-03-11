@@ -1,5 +1,6 @@
 ### 背景
-分享一些难点分析文章，大部分来源于katyscode的分享
+分享一些难点分析文章，大部分来源于katyscode的分享  
+
 
 [Reverse Engineering Adventures: League of Legends Wild Rift (IL2CPP)](https://katyscode.wordpress.com/2021/01/15/reverse-engineering-adventures-league-of-legends-wild-rift-il2cpp/)
 
@@ -37,14 +38,13 @@
 
 [Reverse Engineering Adventures: Brute-force function search, or how to crack Genshin Impact with PowerShell](https://katyscode.wordpress.com/2021/01/24/reverse-engineering-adventures-brute-force-function-search-or-how-to-crack-genshin-impact-with-powershell/)
 
-思路是对加载到内存中的unityplayer进行fuzz调用，假定有一个函数形式为  
-typedef unsigned char* (__cdecl* DecryptDelegate)(unsigned char* encryptedData, int length);
-则从txt段一行行当做函数调用然后判断是否有对globalmetadata修改然后保存筛选判断  
-采用ida识别函数起始地址或许更快 ，但是会有混淆带来的识别率问题，可以配合idapython脚本实现加上unicorn，加入时间限制多线程支持后进行优化  
+1. 思路是对加载到内存中的unityplayer进行fuzz调用，假定有一个函数形式为`typedef unsigned char* (__cdecl* DecryptDelegate)(unsigned char* encryptedData, int length);`
+2. 从txt段一行行当做函数调用然后判断是否有对globalmetadata修改然后保存筛选判断  
+3. 采用ida识别函数起始地址或许更快 ，但是会有混淆带来的识别率问题，可以配合idapython脚本实现加上unicorn，加入时间限制多线程支持后进行优化  
 
 [IL2CPP Reverse Engineering Part 1: Hello World and the IL2CPP Toolchain](https://katyscode.wordpress.com/2020/06/24/il2cpp-part-1/)
 
-提供了一个Hello world级别的C#,IL,C++的对照代码
+1. 提供了一个Hello world级别的C#,IL,C++的对照代码
 
 ```CPP
 #include <stdio.h>
